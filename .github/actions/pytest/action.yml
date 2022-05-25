@@ -1,6 +1,5 @@
-# .github/workflows/app.yaml
 name: Pytest
-on: push
+description: "Python test"
 
 jobs:
   test:
