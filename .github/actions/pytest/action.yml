@@ -29,6 +29,7 @@ runs:
       #if: steps.cache-pipenv.outputs.cache-hit != 'true'
       shell: bash
       run: |
+        echo "Installing dependencies"
         cd "source-repo/{{cookiecutter.project_name}}"
         pipenv install --deploy --dev
         
