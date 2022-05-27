@@ -29,6 +29,7 @@ runs:
       if: steps.cache-pipenv.outputs.cache-hit != 'true'
       shell: bash
       run: |
+        cd "source-repo/{{cookiecutter.project_name}}"
         pipenv install --deploy --dev
     - name: Setup db
       shell: bash
