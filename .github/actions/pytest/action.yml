@@ -46,6 +46,7 @@ runs:
     - name: Run test suite
       shell: bash
       run: |
+        cd "source-repo/{{cookiecutter.project_name}}"
         pipenv run pytest
       env:
         TEST_DB_HOST: localhost
