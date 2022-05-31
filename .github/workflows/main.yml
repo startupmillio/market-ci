@@ -1,5 +1,8 @@
-name: Lint
-description: "Black test"
+name: Market deploy template workflow
+description: "Tests and deploys market application"
+
+on:
+  workflow_call:
 
 jobs:
   lint:
