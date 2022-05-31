@@ -2,6 +2,10 @@ name: Market deploy template workflow
 
 on:
   workflow_call:
+    inputs:
+      codeSrc:
+        required: true
+        type: string
 
 jobs:
   Black:
@@ -12,7 +16,7 @@ jobs:
       - uses: psf/black@stable
         with:
           options: "--check --verbose --diff --color"
-          src: "./{{cookiecutter.project_name}}"
+          src: ${{ inputs.codeSrc }}
           version: "22.3.0"
 
   Pytest:
@@ -37,7 +41,7 @@ jobs:
           - 5432:5432
     defaults:
       run:
-        working-directory: ./{{cookiecutter.project_name}}
+        working-directory: ${{ inputs.codeSrc }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
