@@ -2,10 +2,11 @@ name: Market deploy template workflow
 
 on:
   workflow_call:
-    inputs:
-      codeSrc:
-        required: true
-        type: string
+    
+inputs:
+  codeSrc:
+    required: true
+    type: string
 
 jobs:
   Black:
