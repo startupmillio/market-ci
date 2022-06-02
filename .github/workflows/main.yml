@@ -6,18 +6,17 @@ on:
       codeSrc:
         required: true
         type: string
-      AWS_ACCESS_KEY_ID:
-        required: true
-        type: string
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-        type: string
-      ECR_REPOSITORY:
-        required: true
-        type: string
       AWS_REGION:
         required: true
         type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      ECR_REPOSITORY:
+        required: true
+      
 
 jobs:
   Black:
@@ -104,8 +103,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ inputs.AWS_REGION }}
     
     - name: Login to Amazon ECR
