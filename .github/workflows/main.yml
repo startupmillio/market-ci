@@ -6,6 +6,7 @@ on:
       codeSrc:
         required: true
         type: string
+        default: "."
       AWS_REGION:
         required: true
         type: string
