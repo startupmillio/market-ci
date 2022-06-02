@@ -98,8 +98,10 @@ jobs:
   Build:
     name: Build image
     runs-on: ubuntu-latest
+    needs: [Black, Pytest]
 
     steps:
+    - uses: actions/checkout@v2
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
