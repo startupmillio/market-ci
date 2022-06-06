@@ -122,10 +122,11 @@ jobs:
         if [[ $(aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform 2>&1) != "" ]]; then echo "S3 Bucket does not exist, will create one for you.";
         echo '::set-output name=BUCKET_EXISTS::false'
         else
-        echo "S3 Bucket already exists, skipping S3 Bucket creation step.."
+        echo "S3 Bucket already exists, skipping S3 Bucket creation step..";
+        echo '::set-output name=BUCKET_EXISTS::true'
         fi
     - name: Create S3 Bucket
-      if: steps.check-s3.outputs.BUCKET_EXISTS != 'true'
+      if: steps.check-s3.outputs.BUCKET_EXISTS == 'false'
       shell: bash
       run: |
         aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }};
