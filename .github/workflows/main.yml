@@ -115,16 +115,21 @@ jobs:
         aws-region: ${{ inputs.AWS_REGION }}
     - name: Check AWS version
       run: aws --version
-    - name: Check if S3 Bucket exists
+    - name: Check for existing S3 Bucket
+      id: check-s3
       shell: bash
       run: |
-        if [[ $(aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform 2>&1) != "" ]]; then aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }};
-        echo "S3 Bucket does not exist, creating one for you.";
+        if [[ $(aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform 2>&1) != "" ]]; then echo "S3 Bucket does not exist, will create one for you.";
+        echo '::set-output name=BUCKET_EXISTS::false'
         else
-        echo "S3 Bucket already exists, moving forward."
+        echo "S3 Bucket already exists, skipping S3 Bucket creation step.."
         fi
+    - name: Create S3 Bucket
+      if: steps.check-s3.outputs.BUCKET_EXISTS != 'true'
+      shell: bash
+      run: |
+        aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }};
 
-  
 
   Build:
     if: inputs.testsOnly != true
