@@ -119,11 +119,8 @@ jobs:
       shell: bash
       run: |
         BUCKET_EXISTS=$(aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform 2>&1)
-        if [[ "$BUCKET_EXISTS" != "" ]]; then aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }};
-        echo "S3 Bucket does not exist, creating one for you.";
-        else
-        echo "S3 Bucket already exists, moving forward."
-        fi
+        aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }}
+
   
 
   Build:
