@@ -113,7 +113,10 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ inputs.AWS_REGION }}
+    - name: Check AWS version
+      run: aws --version
     - name: Check if S3 Bucket exists
+      shell: bash
       run: |
         BUCKET_EXISTS=$(aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform 2>&1)
         if [[ "$BUCKET_EXISTS" != "" ]]; then aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }};
