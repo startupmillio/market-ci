@@ -118,7 +118,7 @@ jobs:
     - name: Check if S3 Bucket exists
       shell: bash
       run: |
-        aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform
+        BUCKET_EXISTS=$(aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform 2>&1)
 
   
 
