@@ -5,10 +5,12 @@ terraform {
       version = "~> 3.0"
     }
   }
-  backend "s3" {
-    bucket = "market-user-ms-s3-terraform"
+  #variables like ${github.var} are being replaced using sed command in pipeline. 
+  #We are not able to parse terraform variables to backend parameters
+  backend "s3" { 
+    bucket = "${github.project_name}-s3-terraform"
     key    = "${github.project_name}/terraform/${github.project_env}/terraform.tfstate"
-    region = "us-east-1"
+    region = "${github.region}"
   }
 }
 
