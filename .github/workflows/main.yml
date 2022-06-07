@@ -145,6 +145,11 @@ jobs:
         repository: startupmillio/market-ci
         ref: "terraform"
 
+    - name: 'Terraform: modifying backend variables'
+      working-directory: ./Terraform
+      run: |
+        sed -i 's/${github.project_name}/${{ inputs.PROJECT_NAME }}/' provider.tf
+        sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
 
     - name: Terraform Init
       working-directory: ./Terraform
