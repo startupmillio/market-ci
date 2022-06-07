@@ -7,7 +7,7 @@ terraform {
   }
   backend "s3" {
     bucket = "market-user-ms-s3-terraform"
-    key    = "terraform/market-user-ms/dev/terraform.tfstate"
+    key    = "${var.project_name}/terraform/${var.project_env}/terraform.tfstate"
     region = "us-east-1"
   }
 }

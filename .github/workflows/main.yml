@@ -18,6 +18,9 @@ on:
       PROJECT_NAME:
         required: false
         type: string
+      PROJECT_ENV:
+        required: false
+        type: string
       AWS_REGION:
         required: false
         type: string
