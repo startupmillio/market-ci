@@ -12,7 +12,7 @@ on:
         type: boolean
         default: false
       skipTests:
-        required: true
+        required: false
         type: boolean
       PROJECT_NAME:
         required: false
