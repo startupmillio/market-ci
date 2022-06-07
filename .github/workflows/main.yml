@@ -12,7 +12,7 @@ on:
         type: boolean
         default: false
       skipTests:
-        required: false
+        required: true
         type: boolean
       PROJECT_NAME:
         required: false
@@ -138,8 +138,10 @@ jobs:
     - name: Clone market-ci repository
       uses: actions/checkout@v3
       with:
-        #Don't forget to change branch to main :)
-        repository: ${{ env.GITHUB_REPOSITORY }}
+        #Don't forget to change ref to main :)
+        repository: startupmillio/market-ci
+        ref: "terraform"
+
 
     - name: Terraform Init
       run: |
