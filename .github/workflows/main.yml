@@ -162,8 +162,9 @@ jobs:
     - name: Terraform Plan
       working-directory: ./Terraform
       run: |
-        ls -la
-        terraform plan
+        terraform plan -var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
+        -var 'project_env=${{ inputs.PROJECT_ENV }}'
+
 
 
 
