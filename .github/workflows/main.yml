@@ -24,9 +24,7 @@ on:
       AWS_REGION:
         required: false
         type: string
-      ECR_REPOSITORY:
-        required: false
-        type: string
+        
     secrets:
       AWS_ACCESS_KEY_ID:
         required: false
