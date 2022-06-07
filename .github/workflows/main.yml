@@ -140,8 +140,11 @@ jobs:
         working-directory: Terraform
 
     - name: Terraform Init
-      run: |
-        terraform init
+      run: terraform init
+    - name: Terraform Validate
+      run: terraform validate
+    - name: Terraform Plan
+      run: terraform plan
 
 
 
