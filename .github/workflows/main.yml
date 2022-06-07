@@ -135,12 +135,11 @@ jobs:
       with:
         #Don't forget to change branch to main :)
         repository: startupmillio/market-ci@terraform
-    defaults:
-      run:
-        working-directory: Terraform
 
     - name: Terraform Init
-      run: terraform init
+      run: |
+        cd Terraform
+        terraform init
     - name: Terraform Validate
       run: terraform validate
     - name: Terraform Plan
