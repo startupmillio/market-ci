@@ -32,7 +32,7 @@ on:
 
 jobs:
   Black:
-    if: ${{ inputs.skipTests }} == 'false'
+    if: ${{ !inputs.skipTests }}
     name: Black Test
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +44,7 @@ jobs:
           version: "22.3.0"
 
   Pytest:
-    if: ${{ inputs.skipTests }} == 'false'
+    if: ${{ !inputs.skipTests }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
