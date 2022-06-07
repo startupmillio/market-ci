@@ -129,7 +129,20 @@ jobs:
       if: steps.check-s3.outputs.BUCKET_EXISTS == 'false'
       shell: bash
       run: |
-        aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }};
+        aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }}
+    - name: Clone market-ci repository
+      uses: actions/checkout@v3
+      with:
+        #Don't forget to change branch to main :)
+        repository: startupmillio/market-ci@terraform
+    defaults:
+      run:
+        working-directory: Terraform
+
+    - name: Terraform Init
+      run: |
+        terraform init
+
 
 
   Build:
