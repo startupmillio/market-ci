@@ -14,6 +14,7 @@ on:
       skipTests:
         required: false
         type: boolean
+        default: true
       PROJECT_NAME:
         required: false
         type: string
@@ -144,13 +145,18 @@ jobs:
 
 
     - name: Terraform Init
-      run: |
-        cd Terraform
-        terraform init
+      working-directory: ./Terraform
+      run: terraform init
+
     - name: Terraform Validate
+      working-directory: ./Terraform
       run: terraform validate
+
     - name: Terraform Plan
-      run: terraform plan
+      working-directory: ./Terraform
+      run: |
+        ls -la
+        terraform plan
 
 
 
