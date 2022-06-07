@@ -32,7 +32,7 @@ on:
 
 jobs:
   Black:
-    if: ${{ inputs.skipTests }} == false
+    if: ${{ inputs.skipTests }} == 'false'
     name: Black Test
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +44,7 @@ jobs:
           version: "22.3.0"
 
   Pytest:
-    if: ${{ inputs.skipTests }} == false
+    if: ${{ inputs.skipTests }} == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -119,8 +119,7 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ inputs.AWS_REGION }}
-    - name: Check terraform
-      run: terraform --help
+
     - name: Check for existing S3 Bucket
       id: check-s3
       shell: bash
