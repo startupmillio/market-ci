@@ -11,6 +11,9 @@ on:
         required: false
         type: boolean
         default: false
+      skipTests:
+        required: false
+        type: boolean
       PROJECT_NAME:
         required: false
         type: string
@@ -28,6 +31,7 @@ on:
 
 jobs:
   Black:
+    if: ${{ inputs.skipTests }} == false
     name: Black Test
     runs-on: ubuntu-latest
     steps:
@@ -39,6 +43,7 @@ jobs:
           version: "22.3.0"
 
   Pytest:
+    if: ${{ inputs.skipTests }} == false
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -134,7 +139,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         #Don't forget to change branch to main :)
-        repository: ${{ env.GITHUB_ACTION_REPOSITORY }}
+        repository: ${{ env.GITHUB_REPOSITORY }}
 
     - name: Terraform Init
       run: |
