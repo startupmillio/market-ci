@@ -3,18 +3,28 @@ name: Market deploy template workflow
 on:
   workflow_call:
     inputs:
-      codeSrc:
+      codeSrc: #Source code path. Default is '.'
         required: false
         type: string
         default: "."
-      testsOnly:
+      testsOnly: #Prevents other jobs except 'test jobs' to run if true.
+        required: false
         type: boolean
         default: false
-      AWS_REGION:
+      skipTests: #Skips tests if true
+        required: false
+        type: boolean
+        default: false
+      PROJECT_NAME: #Project name defines aws resources prefix to deploy and manage
         required: false
         type: string
-      ECR_REPOSITORY:
+      PROJECT_ENV: #Project environment (dev, qa, staging, prod). Also affects some aws resources prefixes and tags
+        required: false
         type: string
+      AWS_REGION: #AWS Region to deploy resources in.
+        required: false
+        type: string
+        
     secrets:
       AWS_ACCESS_KEY_ID:
         required: false
@@ -23,6 +33,7 @@ on:
 
 jobs:
   Black:
+    if: ${{ !inputs.skipTests }}
     name: Black Test
     runs-on: ubuntu-latest
     steps:
@@ -34,6 +45,7 @@ jobs:
           version: "22.3.0"
 
   Pytest:
+    if: ${{ !inputs.skipTests }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -98,11 +110,84 @@ jobs:
           TEST_DB_PORT: 5432
           TEST_DB_USER: postgres
 
+  Infrastructure:
+    if: inputs.testsOnly != true
+    runs-on: ubuntu-latest
+    needs: [Black, Pytest]
+    env:
+      #Making env var with parameters for terraform apply command to subsequently parse our workflow inputs to terraform variables.
+      TERRAFORM_VARS: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
+        -var 'project_env=${{ inputs.PROJECT_ENV }}'"
+      BUCKET_NAME: marketplace-boilerplate-${{ inputs.PROJECT_NAME }}-terraform
+
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.AWS_REGION }}
+
+    - name: Check for existing S3 Bucket
+      id: check-s3
+      shell: bash
+      #Checking if S3 Bucket with the same name already exists and setting result as output for this step.
+      run: |
+        if [[ $(aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform 2>&1) != "" ]]; then echo "S3 Bucket does not exist, will create one for you.";
+        echo '::set-output name=BUCKET_EXISTS::false'
+        else
+        echo "S3 Bucket already exists, skipping S3 Bucket creation step..";
+        echo '::set-output name=BUCKET_EXISTS::true'
+        fi
+
+    - name: Create S3 Bucket
+      if: steps.check-s3.outputs.BUCKET_EXISTS == 'false'
+      shell: bash
+      #Creating S3 Bucket for terraform backend if it does not exist.
+      run: |
+        aws s3api create-bucket --bucket ${{ env.BUCKET_NAME }} --region ${{ inputs.AWS_REGION }}
+
+    - name: Clone market-ci repository
+      uses: actions/checkout@v3
+      with:
+        #Cloning repository with terraform code
+        #Don't forget to change ref to main :)
+        repository: startupmillio/market-ci
+        ref: "main"
+
+    - name: 'Terraform: modifying backend variables'
+      working-directory: ./Terraform
+      #Terraform does not allow to parse variables to backend configuration
+      #So we have to modify provider.tf file with our input parameters using sed.
+      run: |
+        sed -i 's/${github.project_name}/${{ inputs.PROJECT_NAME }}/' provider.tf
+        sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
+        sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
+        sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
+
+    - name: Terraform Init
+      working-directory: ./Terraform
+      run: terraform init
+
+    - name: Terraform Validate
+      working-directory: ./Terraform
+      run: terraform validate
+
+    - name: Terraform Plan
+      working-directory: ./Terraform
+      run: |
+        terraform plan ${{ env.TERRAFORM_VARS }}
+
+    - name: Terraform Apply
+      working-directory: ./Terraform
+      run: |
+        terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
+
   Build:
     if: inputs.testsOnly != true
     name: Build image
     runs-on: ubuntu-latest
-    needs: [Black, Pytest]
+    needs: [Black, Pytest, Infrastructure]
 
     defaults:
       run:
@@ -110,6 +195,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v2.0
+      with:
+        version: 'latest'
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -138,9 +228,11 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.ECR_REPOSITORY }}
+        ECR_REPOSITORY: ${{ inputs.PROJECT_NAME }}
         IMAGE_TAG: ${{ github.sha }}
+      #DOCKER_BUILDKIT=1 environment variable is required, otherwise build job is going to throw an error.
       run: |
         export DOCKER_BUILDKIT=1
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-${{ inputs.PROJECT_ENV }} \
+        -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+        docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
