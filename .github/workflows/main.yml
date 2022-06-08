@@ -118,6 +118,7 @@ jobs:
       #Making env var with parameters for terraform apply command to subsequently parse our workflow inputs to terraform variables.
       TERRAFORM_VARS: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
         -var 'project_env=${{ inputs.PROJECT_ENV }}'"
+      BUCKET_NAME: marketplace-boilerplate-${{ inputs.PROJECT_NAME }}-terraform
 
     steps:
     - name: Configure AWS credentials
@@ -144,7 +145,7 @@ jobs:
       shell: bash
       #Creating S3 Bucket for terraform backend if it does not exist.
       run: |
-        aws s3api create-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform --region ${{ inputs.AWS_REGION }}
+        aws s3api create-bucket --bucket ${{ env.BUCKET_NAME }} --region ${{ inputs.AWS_REGION }}
 
     - name: Clone market-ci repository
       uses: actions/checkout@v3
@@ -162,6 +163,7 @@ jobs:
         sed -i 's/${github.project_name}/${{ inputs.PROJECT_NAME }}/' provider.tf
         sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
         sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
+        sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
 
     - name: Terraform Init
       working-directory: ./Terraform
