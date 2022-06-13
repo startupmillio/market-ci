@@ -113,9 +113,9 @@ jobs:
   Infrastructure:
     if: |
       always() &&
-      inputs.testsOnly != true &&
+      (inputs.testsOnly != true &&
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') &&
-      (needs.Black.result == 'skipped' || needs.Pytest.result == 'skipped')
+      (needs.Black.result == 'skipped' || needs.Pytest.result == 'skipped'))
     runs-on: ubuntu-latest
     needs: [Black, Pytest]
     env:
