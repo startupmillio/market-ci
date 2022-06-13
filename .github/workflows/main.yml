@@ -82,7 +82,7 @@ jobs:
         run: |
           python -m pip install --upgrade pipenv wheel
       - id: cache-pipenv
-        uses: actions/cache@v3
+        uses: actions/cache@v2
         with:
           path: ~/.local/share/virtualenvs
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
@@ -167,20 +167,20 @@ jobs:
         sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
         sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
 
-    - name: Terraform Init
+    - name: Terraform Init - Build
       working-directory: ${{ env.DIR_TF_BUILD }}
       run: terraform init
 
-    - name: Terraform Validate
+    - name: Terraform Validate - Build
       working-directory: ${{ env.DIR_TF_BUILD }}
       run: terraform validate
 
-    - name: Terraform Apply
+    - name: Terraform Apply - Build
       working-directory: ${{ env.DIR_TF_BUILD }}
       run: |
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
 
-    - name: 'Terraform: modifying backend variables - Deploy'
+    - name: 'Terraform: modifying backend variables - Deploy EKS'
       working-directory: ${{ env.DIR_TF_DEPLOY }}
       #Terraform does not allow to parse variables to backend configuration
       #So we have to modify provider.tf file with our input parameters using sed.
@@ -189,6 +189,19 @@ jobs:
         sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
         sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
         sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
+
+    - name: Terraform Init - Deploy EKS
+      working-directory: ${{ env.DIR_TF_DEPLOY }}
+      run: terraform init
+
+    - name: Terraform Validate - Deploy EKS
+      working-directory: ${{ env.DIR_TF_DEPLOY }}
+      run: terraform validate
+
+    - name: Terraform Apply - Deploy EKS
+      working-directory: ${{ env.DIR_TF_DEPLOY }}
+      run: |
+        terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
 
   Build:
     if: inputs.testsOnly != true
@@ -222,7 +235,7 @@ jobs:
       run: |
         python -m pip install --upgrade pipenv wheel
     - id: cache-pipenv
-      uses: actions/cache@v3
+      uses: actions/cache@v2
       with:
         path: ~/.local/share/virtualenvs
         key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
