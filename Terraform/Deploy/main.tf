@@ -7,7 +7,7 @@ module "vpc" {
 
   azs    = "us-east-1a, us-east-1b, us-east-1c"
 
-  global_tags = {
+  tags = {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   }
 }
