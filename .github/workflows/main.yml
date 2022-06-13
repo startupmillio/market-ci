@@ -153,7 +153,7 @@ jobs:
         #Cloning repository with terraform code
         #Don't forget to change ref to main :)
         repository: startupmillio/market-ci
-        ref: "main"
+        ref: "BM-29" #change to main!!!
 
     - name: 'Terraform: modifying backend variables'
       working-directory: ./Terraform/Build
