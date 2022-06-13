@@ -2,10 +2,14 @@ locals {
   cluster_name = "${var.project_name}"
 }
 
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
-  azs    = "us-east-1a, us-east-1b, us-east-1c"
+  azs    = data.aws_availability_zones.available.names
 
   tags = {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
