@@ -133,7 +133,7 @@ jobs:
       shell: bash
       #Checking if S3 Bucket with the same name already exists and setting result as output for this step.
       run: |
-        if [[ $(aws s3api head-bucket --bucket ${{ inputs.PROJECT_NAME }}-s3-terraform 2>&1) != "" ]]; then echo "S3 Bucket does not exist, will create one for you.";
+        if [[ $(aws s3api head-bucket --bucket ${{ env.BUCKET_NAME }} 2>&1) != "" ]]; then echo "S3 Bucket does not exist, will create one for you.";
         echo '::set-output name=BUCKET_EXISTS::false'
         else
         echo "S3 Bucket already exists, skipping S3 Bucket creation step..";
@@ -156,7 +156,7 @@ jobs:
         ref: "main"
 
     - name: 'Terraform: modifying backend variables'
-      working-directory: ./Terraform
+      working-directory: ./Terraform/Build
       #Terraform does not allow to parse variables to backend configuration
       #So we have to modify provider.tf file with our input parameters using sed.
       run: |
@@ -166,20 +166,20 @@ jobs:
         sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
 
     - name: Terraform Init
-      working-directory: ./Terraform
+      working-directory: ./Terraform/Build
       run: terraform init
 
     - name: Terraform Validate
-      working-directory: ./Terraform
+      working-directory: ./Terraform/Build
       run: terraform validate
 
-    - name: Terraform Plan
-      working-directory: ./Terraform
-      run: |
-        terraform plan ${{ env.TERRAFORM_VARS }}
+    # - name: Terraform Plan
+    #   working-directory: ./Terraform/Build
+    #   run: |
+    #     terraform plan ${{ env.TERRAFORM_VARS }}
 
     - name: Terraform Apply
-      working-directory: ./Terraform
+      working-directory: ./Terraform/Build
       run: |
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
 
@@ -228,11 +228,11 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.PROJECT_NAME }}
+        ECR_REPOSITORY: ${{ inputs.PROJECT_NAME }}-${{ inputs.PROJECT_ENV }}
         IMAGE_TAG: ${{ github.sha }}
       #DOCKER_BUILDKIT=1 environment variable is required, otherwise build job is going to throw an error.
       run: |
         export DOCKER_BUILDKIT=1
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG-${{ inputs.PROJECT_ENV }} \
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
         -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
         docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
