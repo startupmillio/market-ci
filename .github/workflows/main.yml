@@ -14,7 +14,7 @@ on:
       skipTests: #Skips tests if true
         required: false
         type: boolean
-        default: false
+        default: true
       PROJECT_NAME: #Project name defines aws resources prefix to deploy and manage
         required: false
         type: string
@@ -111,7 +111,11 @@ jobs:
           TEST_DB_USER: postgres
 
   Infrastructure:
-    if: inputs.testsOnly != true
+    if: |
+      always() &&
+      inputs.testsOnly != true &&
+      (needs.Black.result == 'success' && needs.Pytest.result == 'success') &&
+      (needs.Black.result == 'skipped' || needs.Pytest.result == 'skipped')
     runs-on: ubuntu-latest
     needs: [Black, Pytest]
     env:
