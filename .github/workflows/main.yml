@@ -24,6 +24,9 @@ on:
       AWS_REGION: #AWS Region to deploy resources in.
         required: false
         type: string
+      VPC_CIDR:
+        required: false
+        type: string
         
     secrets:
       AWS_ACCESS_KEY_ID:
@@ -121,7 +124,7 @@ jobs:
     env:
       #Making env var with parameters for terraform apply command to subsequently parse our workflow inputs to terraform variables.
       TERRAFORM_VARS: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
-        -var 'project_env=${{ inputs.PROJECT_ENV }}'"
+        -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}'"
       BUCKET_NAME: marketplace-boilerplate-${{ inputs.PROJECT_NAME }}-terraform
       DIR_TF_BUILD: ./Terraform/Build
       DIR_TF_DEPLOY: ./Terraform/Deploy

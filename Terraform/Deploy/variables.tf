@@ -9,3 +9,7 @@ variable "project_region" {
 variable "project_env" {
     type = string
 }
+
+variable "vpc_cidr" {
+    type = string
+}

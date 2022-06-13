@@ -8,7 +8,7 @@ data "aws_availability_zones" "available" {
 
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
-
+  cidr = "${var.vpc_cidr}"
   azs    = data.aws_availability_zones.available.names
 
   tags = {
