@@ -205,10 +205,10 @@ jobs:
       working-directory: ${{ env.DIR_TF_DEPLOY }}
       run: terraform validate
 
-    - name: Terraform Plan - Deploy EKS
+    - name: Terraform Apply - Deploy EKS
       working-directory: ${{ env.DIR_TF_DEPLOY }}
       run: |
-        terraform plan ${{ env.TERRAFORM_VARS }}
+        terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
 
   Build:
     if: inputs.testsOnly != true
