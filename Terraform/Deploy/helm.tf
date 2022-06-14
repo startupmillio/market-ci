@@ -5,7 +5,7 @@ resource "helm_release" "contour_ingress_controller" {
 }
 
 resource "helm_release" "contour_ingress_configure" {
-  name       = "contour-ingress-controller"
+  name       = "contour-ingress-configure"
   chart      = "../../Helm/ingress-chart"
   depends_on = [helm_release.contour_ingress_controller]
 
