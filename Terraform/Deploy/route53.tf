@@ -1,9 +1,7 @@
-data "aws_lb" "contour_elb" {
-  tags = {
-      "kubernetes.io/cluster/${var.project_name}" = "owned"
-      "kubernetes.io/service-name" = "default/contour-ingress-controller-envoy"
+data "kubernetes_service" "contour" {
+  metadata {
+    name = "contour-ingress-controller-envoy"
   }
-  ## it's maybe required to write here some dependencies from ecs cluster and helm charts creation steps
 }
 
 data "aws_route53_zone" "market_zone" {
@@ -16,7 +14,7 @@ resource "aws_route53_record" "prod" {
   name    = "prod.${var.project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
-  records = [data.aws_lb.contour_elb.dns_name]
+  records = [data.kubernetes_service.contour.status.0.load_balancer.0.ingress.0.hostname]
 }
 
 resource "aws_route53_record" "dev" {
@@ -24,7 +22,7 @@ resource "aws_route53_record" "dev" {
   name    = "dev.${var.project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
-  records = [data.aws_lb.contour_elb.dns_name]
+  records = [data.kubernetes_service.contour.status.0.load_balancer.0.ingress.0.hostname]
 }
 
 resource "aws_route53_record" "qa" {
@@ -32,5 +30,5 @@ resource "aws_route53_record" "qa" {
   name    = "qa.${var.project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
-  records = [data.aws_lb.contour_elb.dns_name]
+  records = [data.kubernetes_service.contour.status.0.load_balancer.0.ingress.0.hostname]
 }
