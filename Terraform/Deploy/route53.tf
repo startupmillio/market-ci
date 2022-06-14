@@ -11,7 +11,7 @@ data "aws_route53_zone" "market_zone" {
 }
 
 resource "aws_route53_record" "prod" {
-  zone_id = aws_route53_zone.primary.zone_id
+  zone_id = aws_route53_zone.market_zone.zone_id
   name    = "prod.${project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
@@ -19,7 +19,7 @@ resource "aws_route53_record" "prod" {
 }
 
 resource "aws_route53_record" "dev" {
-  zone_id = aws_route53_zone.primary.zone_id
+  zone_id = aws_route53_zone.market_zone.zone_id
   name    = "dev.${project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
@@ -27,7 +27,7 @@ resource "aws_route53_record" "dev" {
 }
 
 resource "aws_route53_record" "qa" {
-  zone_id = aws_route53_zone.primary.zone_id
+  zone_id = aws_route53_zone.market_zone.zone_id
   name    = "qa.${project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
