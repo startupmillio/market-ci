@@ -12,7 +12,7 @@ data "aws_route53_zone" "market_zone" {
 
 resource "aws_route53_record" "prod" {
   zone_id = data.aws_route53_zone.market_zone.zone_id
-  name    = "prod.${project_name}.${data.aws_route53_zone.market_zone.name}"
+  name    = "prod.${var.project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
   records = [data.aws_lb.contour_elb.dns_name]
@@ -20,7 +20,7 @@ resource "aws_route53_record" "prod" {
 
 resource "aws_route53_record" "dev" {
   zone_id = data.aws_route53_zone.market_zone.zone_id
-  name    = "dev.${project_name}.${data.aws_route53_zone.market_zone.name}"
+  name    = "dev.${var.project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
   records = [data.aws_lb.contour_elb.dns_name]
@@ -28,7 +28,7 @@ resource "aws_route53_record" "dev" {
 
 resource "aws_route53_record" "qa" {
   zone_id = data.aws_route53_zone.market_zone.zone_id
-  name    = "qa.${project_name}.${data.aws_route53_zone.market_zone.name}"
+  name    = "qa.${var.project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
   records = [data.aws_lb.contour_elb.dns_name]
