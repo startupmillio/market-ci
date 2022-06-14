@@ -6,11 +6,11 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~=2.5.1"
+      version = "~> 2.5.1"
     }
     kubernetes = {
       source = "hashicorp/kubernetes"
-      version = "~=2.11.0"
+      version = "~> 2.11.0"
     }
   }
   #variables like ${github.var} are being replaced using sed command in pipeline. 
