@@ -1,4 +1,4 @@
-data "aws_elb" "contour_elb" {
+data "aws_lb" "contour_elb" {
   tags = {
       "kubernetes.io/cluster/${var.project_name}" = "owned"
   }
@@ -15,7 +15,7 @@ resource "aws_route53_record" "prod" {
   name    = "prod.${project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
-  records = [data.aws_elb.dns_name]
+  records = [data.aws_lb.contour_elb.dns_name]
 }
 
 resource "aws_route53_record" "dev" {
@@ -23,7 +23,7 @@ resource "aws_route53_record" "dev" {
   name    = "dev.${project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
-  records = [data.aws_elb.dns_name]
+  records = [data.aws_lb.contour_elb.dns_name]
 }
 
 resource "aws_route53_record" "qa" {
@@ -31,5 +31,5 @@ resource "aws_route53_record" "qa" {
   name    = "qa.${project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
   ttl     = "300"
-  records = [data.aws_elb.dns_name]
+  records = [data.aws_lb.contour_elb.dns_name]
 }
