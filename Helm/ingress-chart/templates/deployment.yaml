@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-hosts
+
+spec:
+  rules:
+  - host: dev.{{ .Values.domain }}
+    http:
+      paths:
+        - backend:
+           serviceName: dev
+           servicePort: 80
+
+  - host: prod.{{ .Values.domain }}
+    http:
+      paths:
+        - backend:
+           serviceName: prod
+           servicePort: 80
+
+  - host: qa.{{ .Values.domain }}
+    http:
+      paths:
+        - backend:
+           serviceName: qa
+           servicePort: 80
