@@ -13,3 +13,7 @@ variable "project_env" {
 variable "vpc_cidr" {
     type = string
 }
+
+variable "route53_zone" {
+    type = string
+}
