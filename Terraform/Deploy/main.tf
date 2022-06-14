@@ -6,6 +6,14 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+data "aws_eks_cluster" "market-cluster" {
+  name = module.eks.cluster_id
+}
+
+data "aws_eks_cluster_auth" "market-cluster" {
+  name = module.eks.cluster_id
+}
+
 module "vpc" {
   source                 = "terraform-aws-modules/vpc/aws"
   cidr                   = "${var.vpc_cidr}"
