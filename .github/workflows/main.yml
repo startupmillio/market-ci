@@ -148,7 +148,7 @@ jobs:
         echo "S3 Bucket already exists, skipping AWS S3 Bucket creation step..";
         echo '::set-output name=BUCKET_EXISTS::true'
         fi
-        if [[ $(aws ecr describe-repositories --repository-names ${{ env.ECR_NAME }} 2>&1) -eq 0)]];
+        if [[ $(aws ecr describe-repositories --repository-names ${{ env.ECR_NAME }} 2>&1) -eq 0]];
         then echo "ECR repository already exists, skipping AWS ECR creation step..";
         echo '::set-output name=ECR_EXISTS::true'
         else
