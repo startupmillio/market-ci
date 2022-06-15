@@ -227,7 +227,7 @@ jobs:
 
   Deploy:
     runs-on: ubuntu-latest
-    needs: [Build,Infrastructure-S3-ECR] # Dont forget to include build stage here later.
+    needs: [Build, Infrastructure-S3-ECR] # Dont forget to include build stage here later.
     if: |
       always() &&
       inputs.testsOnly != true ||
