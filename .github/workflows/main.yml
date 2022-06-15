@@ -136,7 +136,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ inputs.AWS_REGION }}
 
-    - name: Check for existing S3 Bucket
+    - name: Check for existing S3, ECR
       id: check-s3-ecr
       shell: bash
       # Checking if S3 Bucket & ECR Repository with same names already
@@ -172,7 +172,11 @@ jobs:
         --image-scanning-configuration scanOnPush=true
 
   Build:
-    if: inputs.testsOnly != true
+    if: |
+      always() &&
+      inputs.testsOnly != true ||
+      (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
+      (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
     name: Build image
     runs-on: ubuntu-latest
     needs: [Infrastructure-S3-ECR]
