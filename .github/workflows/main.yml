@@ -117,7 +117,6 @@ jobs:
           TEST_DB_USER: postgres
 
   Infrastructure-S3-ECR:
-    id: infra
     runs-on: ubuntu-latest
     needs: [Black, Pytest]
     if: |
