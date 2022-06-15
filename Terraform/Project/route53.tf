@@ -15,8 +15,6 @@ resource "aws_route53_record" "dev" {
   name    = "dev.${var.project_name}.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
 
-  //records = [data.kubernetes_service.contour.status.0.load_balancer.0.ingress.0.hostname]
-
   alias {
     name                   = data.kubernetes_service.contour.status.0.load_balancer.0.ingress.0.hostname
     zone_id                = data.aws_elb_hosted_zone_id.main.id

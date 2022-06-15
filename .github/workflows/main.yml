@@ -1,13 +1,13 @@
-name: Market deploy template workflow
+name: Marketplace-boilerplate CI/CD workflow
 
 on:
   workflow_call:
     inputs:
-      codeSrc: #Source code path. Default is '.'
+      codeSrc: # Source code path. Default is '.'
         required: false
         type: string
         default: "."
-      testsOnly: #Prevents other jobs except 'test jobs' to run if true.
+      testsOnly: # Prevents other jobs except 'test jobs' to run if true.
         required: false
         type: boolean
         default: false
@@ -15,19 +15,19 @@ on:
         required: false
         type: boolean
         default: true
-      PROJECT_NAME: #Project name defines aws resources prefix to deploy and manage
+      PROJECT_NAME: # Project name defines aws resources prefix to deploy and manage
         required: false
         type: string
-      PROJECT_ENV: #Project environment (dev, qa, staging, prod). Also affects some aws resources prefixes and tags
+      PROJECT_ENV: # Project environment (dev, qa, staging, prod). Also affects some aws resources prefixes and tags
         required: false
         type: string
-      AWS_REGION: #AWS Region to deploy resources in.
+      AWS_REGION: # AWS Region to deploy resources in.
         required: false
         type: string
-      VPC_CIDR:
+      VPC_CIDR: # VPC CIDR for kubernetes to use
         required: false
         type: string
-      ROUTE53_ZONE:
+      ROUTE53_ZONE: # Zone name to create dns records in
         required: false
         type: string
         
@@ -116,7 +116,7 @@ jobs:
           TEST_DB_PORT: 5432
           TEST_DB_USER: postgres
 
-  Infrastructure:
+  Infrastructure-S3-ECR:
     runs-on: ubuntu-latest
     needs: [Black, Pytest]
     if: |
@@ -125,13 +125,8 @@ jobs:
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
       (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
     env:
-      #Making env var with parameters for terraform apply command to subsequently parse our workflow inputs to terraform variables.
-      TERRAFORM_VARS: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
-        -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
-        -var 'route53_zone=${{ inputs.ROUTE53_ZONE }}'"
       BUCKET_NAME: marketplace-boilerplate-${{ inputs.PROJECT_NAME }}-terraform
-      DIR_TF_BUILD: ./Terraform/Build
-      DIR_TF_DEPLOY: ./Terraform/Deploy
+      ECR_NAME: ${{ inputs.PROJECT_NAME}}-${{ inputs.PROJECT_ENV }}
 
     steps:
     - name: Configure AWS credentials
@@ -142,83 +137,45 @@ jobs:
         aws-region: ${{ inputs.AWS_REGION }}
 
     - name: Check for existing S3 Bucket
-      id: check-s3
+      id: check-s3-ecr
       shell: bash
-      #Checking if S3 Bucket with the same name already exists and setting result as output for this step.
+      # Checking if S3 Bucket & ECR Repository with same names already
+      # exist and setting result as outputs for this step.
       run: |
         if [[ $(aws s3api head-bucket --bucket ${{ env.BUCKET_NAME }} 2>&1) != "" ]]; then echo "S3 Bucket does not exist, will create one for you.";
         echo '::set-output name=BUCKET_EXISTS::false'
         else
-        echo "S3 Bucket already exists, skipping S3 Bucket creation step..";
+        echo "S3 Bucket already exists, skipping AWS S3 Bucket creation step..";
         echo '::set-output name=BUCKET_EXISTS::true'
+        fi
+        if [[ $(aws ecr describe-repositories --repository-names ${{ env.ECR_NAME }} 2>&1) -eq 0)]];
+        then echo "ECR repository already exists, skipping AWS ECR creation step..";
+        echo '::set-output name=ECR_EXISTS::true'
+        else
+        echo "ECR repository does not exist, will create one for you.";
+        echo '::set-output name=ECR_EXISTS::false';
         fi
 
     - name: Create S3 Bucket
-      if: steps.check-s3.outputs.BUCKET_EXISTS == 'false'
+      if: steps.check-s3-ecr.outputs.BUCKET_EXISTS == 'false'
       shell: bash
-      #Creating S3 Bucket for terraform backend if it does not exist.
+      # Creating S3 Bucket for terraform backend if it does not exist.
       run: |
         aws s3api create-bucket --bucket ${{ env.BUCKET_NAME }} --region ${{ inputs.AWS_REGION }}
 
-    - name: Clone market-ci repository
-      uses: actions/checkout@v3
-      with:
-        #Cloning repository with terraform code
-        #Don't forget to change ref to main :)
-        repository: startupmillio/market-ci
-        ref: "BM-29" #change to main!!!
-
-    - name: 'Terraform: modifying backend variables - Build'
-      working-directory: ${{ env.DIR_TF_BUILD }}
-      #Terraform does not allow to parse variables to backend configuration
-      #So we have to modify provider.tf file with our input parameters using sed.
+    - name: Create ECR repository
+      if: steps.check-s3-ecr.outputs.ECR_EXISTS == 'false'
+      # Creating ECR Repository for project if it does not exist.
       run: |
-        sed -i 's/${github.project_name}/${{ inputs.PROJECT_NAME }}/' provider.tf
-        sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
-        sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
-        sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
-
-    - name: Terraform Init - Build
-      working-directory: ${{ env.DIR_TF_BUILD }}
-      run: terraform init
-
-    - name: Terraform Validate - Build
-      working-directory: ${{ env.DIR_TF_BUILD }}
-      run: terraform validate
-
-    - name: Terraform Apply - Build
-      working-directory: ${{ env.DIR_TF_BUILD }}
-      run: |
-        terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
-
-    - name: 'Terraform: modifying backend variables - Deploy EKS'
-      working-directory: ${{ env.DIR_TF_DEPLOY }}
-      #Terraform does not allow to parse variables to backend configuration
-      #So we have to modify provider.tf file with our input parameters using sed.
-      run: |
-        sed -i 's/${github.project_name}/${{ inputs.PROJECT_NAME }}/' provider.tf
-        sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
-        sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
-        sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
-
-    - name: Terraform Init - Deploy EKS
-      working-directory: ${{ env.DIR_TF_DEPLOY }}
-      run: terraform init
-
-    - name: Terraform Validate - Deploy EKS
-      working-directory: ${{ env.DIR_TF_DEPLOY }}
-      run: terraform validate
-
-    - name: Terraform Apply - Deploy EKS
-      working-directory: ${{ env.DIR_TF_DEPLOY }}
-      run: |
-        terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
+        aws ecr create-repository \
+        --repository-name ${{ env.ECR_NAME }} \
+        --image-scanning-configuration scanOnPush=true
 
   Build:
     if: inputs.testsOnly != true
     name: Build image
     runs-on: ubuntu-latest
-    needs: [Black, Pytest, Infrastructure]
+    needs: [Infrastructure-S3-ECR]
 
     defaults:
       run:
@@ -267,3 +224,72 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
         -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
         docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
+
+  Deploy:
+    runs-on: ubuntu-latest
+    needs: [Build] # Dont forget to include build stage here later.
+    if: |
+      always() &&
+      inputs.testsOnly != true ||
+      (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
+      (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
+    env:
+      # Making env var with parameters for terraform apply command to subsequently
+      # parse our workflow inputs to terraform variables.
+      TERRAFORM_VARS: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
+      -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
+      -var 'route53_zone=${{ inputs.ROUTE53_ZONE }}'"
+      BUCKET_NAME: marketplace-boilerplate-${{ inputs.PROJECT_NAME }}-terraform
+      DIR_TF_ENVIRONMENT: ./Terraform/Environment
+      DIR_TF_PROJECT: ./Terraform/Project
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.AWS_REGION }}
+
+    - name: Clone market-ci repository
+      uses: actions/checkout@v3
+      with:
+        #Cloning repository with terraform code
+        #Don't forget to change ref to main :)
+        repository: startupmillio/market-ci
+        ref: "BM-29" #change to main!!!
+
+    - name: 'Terraform: modifying backend variables - Project'
+      working-directory: ${{ env.DIR_TF_PROJECT }}
+      # Terraform does not allow to parse variables to backend configuration
+      # So we have to modify provider.tf file with our input parameters using sed.
+      run: |
+        sed -i 's/${github.project_name}/${{ inputs.PROJECT_NAME }}/' provider.tf
+        sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
+        sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
+        sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
+
+    - name: Terraform - K8s infrastructure for project
+      working-directory: ${{ env.DIR_TF_PROJECT }}
+      run: |
+        terraform init
+        terraform validate
+        terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
+
+    - name: 'Terraform: modifying backend variables - Environment'
+      working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
+      # Terraform does not allow to parse variables to backend configuration
+      # So we have to modify provider.tf file with our input parameters using sed.
+      run: |
+        sed -i 's/${github.project_name}/${{ inputs.PROJECT_NAME }}/' provider.tf
+        sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
+        sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
+        sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
+
+    - name: Terraform - K8s deploy package
+      working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
+      run: |
+        terraform init
+        terraform validate
+        terraform apply -auto-approve ${{ env.TERRAFORM_VARS }}
+
+    
