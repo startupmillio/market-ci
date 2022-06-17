@@ -14,7 +14,11 @@ on:
       skipTests: #Skips tests if true
         required: false
         type: boolean
-        default: true
+        default: true ##!!!! DONT FORGET TO CORRECT
+      skipBuild:
+        required: false
+        type: boolean
+        default: true ##!!!! DONT FORGET TO CORRECT
       PROJECT_NAME: # Project name defines aws resources prefix to deploy and manage
         required: false
         type: string
@@ -187,6 +191,7 @@ jobs:
   Build:
     if: |
       always() &&
+      inputs.skipBuild != true
       inputs.testsOnly != true ||
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
       (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
@@ -284,8 +289,7 @@ jobs:
       env:
         TERRAFORM_VARS_PROJECT: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
         -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
-        -var 'route53_zone=${{ inputs.ROUTE53_ZONE }}' -var 'env_eks_name=${{ env.EKS_NAME }}' \
-        -var 'service_name=${{ inputs.SERVICE_NAME }}'"
+        -var 'env_eks_name=${{ env.EKS_NAME }}'"
       run: |
         terraform init
         terraform validate
