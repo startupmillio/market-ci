@@ -285,6 +285,7 @@ jobs:
 
 
     - name: Terraform - Project Infrasctructure
+      id: tf_project
       working-directory: ${{ env.DIR_TF_PROJECT }}
       env:
         TERRAFORM_VARS_PROJECT: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
@@ -294,8 +295,8 @@ jobs:
         terraform init
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_PROJECT }}
-        echo "PROJECT_VPC_ID=$(terraform output -raw project_vpc_id)" >> $GIHUB_ENV
-        echo "PROJECT_VPC_PRIVATE_SUBNETS=$(terraform output project_vpc_private_subnets)" >> $GITHUB_ENV
+        echo '::set-output name=PROJECT_VPC_ID::$(terraform output -raw project_vpc_id)'
+        echo '::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::$(terraform output project_vpc_private_subnets)'
 
     - name: 'Terraform: modifying backend variables - Environment'
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
@@ -313,8 +314,8 @@ jobs:
         TERRAFORM_VARS_ENV: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
         -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
         -var 'route53_zone=${{ inputs.ROUTE53_ZONE }}' -var 'env_eks_name=${{ env.EKS_NAME }}' \
-        -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'project_vpc_id=${{ env.PROJECT_VPC_ID }}' \
-        -var 'project_vpc_private_subnets=${{ env.PROJECT_VPC_PRIVATE_SUBNETS }}'"
+        -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'project_vpc_id=${{ steps.tf_project.outputs.PROJECT_VPC_ID }}' \
+        -var 'project_vpc_private_subnets=${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }}'"
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
       run: |
         terraform init
