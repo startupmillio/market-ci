@@ -319,10 +319,10 @@ jobs:
         -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'project_vpc_id=${{ steps.tf_project.outputs.PROJECT_VPC_ID }}'"
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
       run: |
-        echo ${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }}
+        echo $PROJECT_VPC_PRIVATE_SUBNETS
         terraform init
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
-        -var 'project_vpc_private_subnets=${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }}'
+        -var 'project_vpc_private_subnets=$PROJECT_VPC_PRIVATE_SUBNETS'
 
     
