@@ -13,7 +13,7 @@ module "vpc" {
   single_nat_gateway     = true
   enable_dns_hostnames   = true
   tags                   = {
-    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/cluster/${var.env_eks_name}" = "shared"
   }
 }
 
