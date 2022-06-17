@@ -191,7 +191,7 @@ jobs:
   Build:
     if: |
       always() &&
-      inputs.skipBuild != true
+      inputs.skipBuild != true ||
       inputs.testsOnly != true ||
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
       (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
