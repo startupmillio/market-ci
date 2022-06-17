@@ -5,23 +5,21 @@ metadata:
 
 spec:
   rules:
-  - host: dev.{{ .Values.domain }}
+  - host: {{ .Values.env }}.market-user-ms.{{ .Values.domain }}
     http:
       paths:
         - backend:
-           serviceName: dev
+           serviceName: market-user-ms
            servicePort: 80
-
-  - host: prod.{{ .Values.domain }}
+  - host: {{ .Values.env }}.market-product-ms.{{ .Values.domain }}
     http:
       paths:
         - backend:
-           serviceName: prod
+           serviceName: market-product-ms
            servicePort: 80
-
-  - host: qa.{{ .Values.domain }}
+  - host: {{ .Values.env }}.market-media-ms.{{ .Values.domain }}
     http:
       paths:
         - backend:
-           serviceName: qa
+           serviceName: market-media-ms
            servicePort: 80

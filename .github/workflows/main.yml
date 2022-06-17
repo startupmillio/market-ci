@@ -21,6 +21,9 @@ on:
       PROJECT_ENV: # Project environment (dev, qa, staging, prod). Also affects some aws resources prefixes and tags
         required: false
         type: string
+      SERVICE_NAME:
+        required: false
+        type: string
       AWS_REGION: # AWS Region to deploy resources in.
         required: false
         type: string
@@ -36,6 +39,19 @@ on:
         required: false
       AWS_SECRET_ACCESS_KEY:
         required: false
+
+env:
+  BUCKET_NAME: ${{ inputs.PROJECT_NAME }}-terraform
+  ECR_NAME: ${{ inputs.PROJECT_NAME}}-${{ inputs.SERVICE_NAME }}-${{ inputs.PROJECT_ENV }}
+  EKS_NAME: ${{ inputs.PROJECT_NAME }}-${{ inputs.PROJECT_ENV }}
+  DIR_TF_ENVIRONMENT: ./Terraform/Environment
+  DIR_TF_PROJECT: ./Terraform/Project
+  DIR_TF_SERVICE: ./Terraform/Service
+  PATH_TF_BACKEND_PROJECT: terraform/${{ inputs.PROJECT_NAME }}/PROJECT/terraform.tfstate
+  PATH_TF_BACKEND_ENVIRONMENT: terraform/${{ inputs.PROJECT_NAME }}/ENV/${{ inputs.PROJECT_ENV }}/terraform.tfstate
+  PATH_TF_BACKEND_SERVICE: terraform/${{ inputs.PROJECT_NAME }}/ENV/${{ inputs.PROJECT_ENV }}/${{ inputs.SERVICE_NAME }}
+  PROJECT_VPC_ID: PLACEHOLDER
+  PROJECT_VPC_PRIVATE_SUBNETS: PLACEHOLDER
 
 jobs:
   Black:
@@ -124,9 +140,6 @@ jobs:
       inputs.testsOnly != true ||
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
       (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
-    env:
-      BUCKET_NAME: marketplace-boilerplate-${{ inputs.PROJECT_NAME }}-terraform
-      ECR_NAME: ${{ inputs.PROJECT_NAME}}-${{ inputs.PROJECT_ENV }}
 
     steps:
     - name: Configure AWS credentials
@@ -220,7 +233,7 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.PROJECT_NAME }}-${{ inputs.PROJECT_ENV }}
+        ECR_REPOSITORY: ${{ env.ECR_NAME }}
         IMAGE_TAG: ${{ github.sha }}
       #DOCKER_BUILDKIT=1 environment variable is required, otherwise build job is going to throw an error.
       run: |
@@ -237,15 +250,7 @@ jobs:
       inputs.testsOnly != true ||
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
       (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
-    env:
-      # Making env var with parameters for terraform apply command to subsequently
-      # parse our workflow inputs to terraform variables.
-      TERRAFORM_VARS: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
-      -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
-      -var 'route53_zone=${{ inputs.ROUTE53_ZONE }}'"
-      BUCKET_NAME: marketplace-boilerplate-${{ inputs.PROJECT_NAME }}-terraform
-      DIR_TF_ENVIRONMENT: ./Terraform/Environment
-      DIR_TF_PROJECT: ./Terraform/Project
+      
     steps:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -271,13 +276,22 @@ jobs:
         sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
         sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
         sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
+        sed -i 's/${github.bucket_key}/${{ env.PATH_TF_BACKEND_PROJECT }}/' provider.tf
 
-    - name: Terraform - K8s infrastructure for project
+
+    - name: Terraform - Project Infrasctructure
       working-directory: ${{ env.DIR_TF_PROJECT }}
+      env:
+        TERRAFORM_VARS_PROJECT: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
+        -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
+        -var 'route53_zone=${{ inputs.ROUTE53_ZONE }}' -var 'env_eks_name=${{ env.EKS_NAME }}' \
+        -var 'service_name=${{ inputs.SERVICE_NAME }}'"
       run: |
         terraform init
         terraform validate
-        terraform destroy -auto-approve ${{ env.TERRAFORM_VARS }}
+        terraform apply -auto-approve ${{ env.TERRAFORM_VARS_PROJECT }}
+        PROJECT_VPC_ID="$(terraform output -raw project_vpc_id)"
+        PROJECT_VPC_PRIVATE_SUBNETS="$(terraform output -raw project_vpc_private_subnets)"
 
     - name: 'Terraform: modifying backend variables - Environment'
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
@@ -288,12 +302,19 @@ jobs:
         sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
         sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
         sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
+        sed -i 's/${github.bucket_key}/${{ env.PATH_TF_BACKEND_PROJECT }}/' provider.tf
 
-    - name: Terraform - K8s deploy package
+    - name: Terraform - Environment infrastructure
+      env:
+        TERRAFORM_VARS_ENV: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
+        -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
+        -var 'route53_zone=${{ inputs.ROUTE53_ZONE }}' -var 'env_eks_name=${{ env.EKS_NAME }}' \
+        -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'project_vpc_id=${{ env.PROJECT_VPC_ID }}' \
+        -var 'project_vpc_private_subnets=${{ env.PROJECT_VPC_PRIVATE_SUBNETS }}'"
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
       run: |
         terraform init
         terraform validate
-        terraform destroy -auto-approve ${{ env.TERRAFORM_VARS }}
+        terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }}
 
     

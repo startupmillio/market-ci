@@ -11,7 +11,11 @@ resource "helm_release" "contour_ingress_configure" {
 
   set {
     name = "domain"
-    value = "${var.project_name}.${data.aws_route53_zone.market_zone.name}"
+    value = "${data.aws_route53_zone.market_zone.name}"
+  }
+  set {
+    name = "env"
+    value = "${var.project_env}"
   }
 
 }
