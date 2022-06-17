@@ -190,8 +190,7 @@ jobs:
 
   Build:
     if: |
-      always() &&
-      (!inputs.skipBuild || !inputs.testsOnly) ||
+      (always() && !inputs.skipBuild && !inputs.testsOnly) ||
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
       (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
     name: Build image
@@ -295,8 +294,8 @@ jobs:
         terraform init
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_PROJECT }}
-        PROJECT_VPC_ID="$(terraform output -raw project_vpc_id)"
-        PROJECT_VPC_PRIVATE_SUBNETS="$(terraform output project_vpc_private_subnets)"
+        echo "PROJECT_VPC_ID=$(terraform output -raw project_vpc_id)" >> $GIHUB_ENV
+        echo "PROJECT_VPC_PRIVATE_SUBNETS=$(terraform output project_vpc_private_subnets)" >> $GITHUB_ENV
 
     - name: 'Terraform: modifying backend variables - Environment'
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
