@@ -10,7 +10,7 @@ data "aws_route53_zone" "market_zone" {
   name         = "${var.route53_zone}"
 }
 
-resource "aws_route53_record" "route53_record" {
+resource "aws_route53_record" "market_user_ms" {
   zone_id = data.aws_route53_zone.market_zone.zone_id
   name    = "${var.project_env}.market-user-ms.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
@@ -22,7 +22,7 @@ resource "aws_route53_record" "route53_record" {
   }
 }
 
-resource "aws_route53_record" "route53_record" {
+resource "aws_route53_record" "market_product_ms" {
   zone_id = data.aws_route53_zone.market_zone.zone_id
   name    = "${var.project_env}.market-product-ms.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
@@ -34,7 +34,7 @@ resource "aws_route53_record" "route53_record" {
   }
 }
 
-resource "aws_route53_record" "route53_record" {
+resource "aws_route53_record" "market_media_ms" {
   zone_id = data.aws_route53_zone.market_zone.zone_id
   name    = "${var.project_env}.market-media-ms.${data.aws_route53_zone.market_zone.name}"
   type    = "A"
