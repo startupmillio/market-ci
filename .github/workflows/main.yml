@@ -54,8 +54,6 @@ env:
   PATH_TF_BACKEND_PROJECT: "terraform/${{ inputs.PROJECT_NAME }}/PROJECT/terraform.tfstate"
   PATH_TF_BACKEND_ENV: "terraform/${{ inputs.PROJECT_NAME }}/ENV/${{ inputs.PROJECT_ENV }}/terraform.tfstate"
   PATH_TF_BACKEND_SERVICE: "terraform/${{ inputs.PROJECT_NAME }}/ENV/${{ inputs.PROJECT_ENV }}/${{ inputs.SERVICE_NAME }}"
-  PROJECT_VPC_ID: PLACEHOLDER
-  PROJECT_VPC_PRIVATE_SUBNETS: PLACEHOLDER
 
 jobs:
   Black:
@@ -295,8 +293,10 @@ jobs:
         terraform init
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_PROJECT }}
-        echo '::set-output name=PROJECT_VPC_ID::$(terraform output -raw project_vpc_id)'
-        echo '::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::$(terraform output project_vpc_private_subnets)'
+        PROJECT_VPC_ID="$(terraform output -raw project_vpc_id)"
+        PROJECT_VPC_PRIVATE_SUBNETS="$(terraform output project_vpc_private_subnets)"
+        echo "::set-output name=PROJECT_VPC_ID::$PROJECT_VPC_ID
+        echo "::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::$PROJECT_VPC_PRIVATE_SUBNETS
 
     - name: 'Terraform: modifying backend variables - Environment'
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
