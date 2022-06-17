@@ -194,7 +194,7 @@ jobs:
       (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
     name: Build image
     runs-on: ubuntu-latest
-    needs: [Infrastructure-S3-ECR]
+    needs: [Infrastructure-S3-ECR, Pytest, Black]
 
     defaults:
       run:
