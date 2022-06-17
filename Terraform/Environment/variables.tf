@@ -31,6 +31,6 @@ variable "project_vpc_id" {
 }
 
 variable "project_vpc_private_subnets" {
-    type = tuple
+    type = list
     default = [""]
 }
