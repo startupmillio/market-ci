@@ -47,9 +47,9 @@ env:
   DIR_TF_ENVIRONMENT: ./Terraform/Environment
   DIR_TF_PROJECT: ./Terraform/Project
   DIR_TF_SERVICE: ./Terraform/Service
-  PATH_TF_BACKEND_PROJECT: terraform/${{ inputs.PROJECT_NAME }}/PROJECT/terraform.tfstate
-  PATH_TF_BACKEND_ENVIRONMENT: terraform/${{ inputs.PROJECT_NAME }}/ENV/${{ inputs.PROJECT_ENV }}/terraform.tfstate
-  PATH_TF_BACKEND_SERVICE: terraform/${{ inputs.PROJECT_NAME }}/ENV/${{ inputs.PROJECT_ENV }}/${{ inputs.SERVICE_NAME }}
+  PATH_TF_BACKEND_PROJECT: "terraform/${{ inputs.PROJECT_NAME }}/PROJECT/terraform.tfstate"
+  PATH_TF_BACKEND_ENVIRONMENT: "terraform/${{ inputs.PROJECT_NAME }}/ENV/${{ inputs.PROJECT_ENV }}/terraform.tfstate"
+  PATH_TF_BACKEND_SERVICE: "terraform/${{ inputs.PROJECT_NAME }}/ENV/${{ inputs.PROJECT_ENV }}/${{ inputs.SERVICE_NAME }}"
   PROJECT_VPC_ID: PLACEHOLDER
   PROJECT_VPC_PRIVATE_SUBNETS: PLACEHOLDER
 
