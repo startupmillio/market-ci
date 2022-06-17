@@ -254,7 +254,9 @@ jobs:
       always() &&
       inputs.testsOnly != true ||
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
-      (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
+      (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped') ||
+      (needs.Build.result == 'skipped') ||
+      (needs.Build.result == 'success')
       
     steps:
     - name: Configure AWS credentials
