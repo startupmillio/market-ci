@@ -296,7 +296,7 @@ jobs:
         PROJECT_VPC_ID="$(terraform output -raw project_vpc_id)"
         PROJECT_VPC_PRIVATE_SUBNETS="$(terraform output project_vpc_private_subnets)"
         echo "::set-output name=PROJECT_VPC_ID::$PROJECT_VPC_ID
-        echo "::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::"$PROJECT_VPC_PRIVATE_SUBNETS"
+        echo "::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::'$PROJECT_VPC_PRIVATE_SUBNETS'
 
     - name: 'Terraform: modifying backend variables - Environment'
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
