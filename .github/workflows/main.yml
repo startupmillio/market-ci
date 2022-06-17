@@ -188,7 +188,8 @@ jobs:
 
   Build:
     if: |
-      (always() && !inputs.skipBuild && !inputs.testsOnly) ||
+      always() &&
+      !inputs.testsOnly && !inputs.skipBuild && 
       (needs.Black.result == 'success' && needs.Pytest.result == 'success') ||
       (needs.Black.result == 'skipped' && needs.Pytest.result == 'skipped')
     name: Build image
