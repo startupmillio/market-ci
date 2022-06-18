@@ -295,8 +295,9 @@ jobs:
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_PROJECT }}
         PROJECT_VPC_ID="$(terraform output -raw project_vpc_id)"
+        PROJECT_VPC_PRIVATE_SUBNETS="$(terraform output project_vpc_private_subnets | sed 's/"/\"/g')"
         echo "::set-output name=PROJECT_VPC_ID::$PROJECT_VPC_ID"
-        echo "::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::$(terraform output project_vpc_private_subnets | sed 's/"/\"/g')"
+        echo "::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::$PROJECT_VPC_PRIVATE_SUBNETS"
 
     - name: 'Terraform: modifying backend variables - Environment'
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
@@ -317,7 +318,7 @@ jobs:
         -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'project_vpc_id=${{ steps.tf_project.outputs.PROJECT_VPC_ID }}'"
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
       run: |
-        echo $PROJECT_VPC_PRIVATE_SUBNETS
+        echo ${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }}
         terraform init
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
