@@ -323,6 +323,6 @@ jobs:
         terraform init
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
-        -var 'project_vpc_private_subnets=${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }}'
+        -var "project_vpc_private_subnets=${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }}"
 
     
