@@ -298,7 +298,7 @@ jobs:
         PROJECT_VPC_PRIVATE_SUBNETS="$(terraform output project_vpc_private_subnets | sed 's/"/\"/g')"
         echo "SUB:$PROJECT_VPC_PRIVATE_SUBNETS"
         echo "::set-output name=PROJECT_VPC_ID::$PROJECT_VPC_ID"
-        echo "::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::$($PROJECT_VPC_PRIVATE_SUBNETS | sed 's/"/\"/g')"
+        echo "::set-output name=PROJECT_VPC_PRIVATE_SUBNETS::$PROJECT_VPC_PRIVATE_SUBNETS | sed 's/"/\"/g'"
 
     - name: 'Terraform: modifying backend variables - Environment'
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
