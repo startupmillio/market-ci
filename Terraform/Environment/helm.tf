@@ -2,6 +2,7 @@ resource "helm_release" "contour_ingress_controller" {
   name       = "contour-ingress-controller"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "contour"
+  depends_on = [module.eks]
 }
 
 resource "helm_release" "contour_ingress_configure" {
@@ -17,5 +18,4 @@ resource "helm_release" "contour_ingress_configure" {
     name = "env"
     value = "${var.project_env}"
   }
-
 }

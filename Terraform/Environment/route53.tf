@@ -2,6 +2,7 @@ data "kubernetes_service" "contour" {
   metadata {
     name = "contour-ingress-controller-envoy"
   }
+  depends_on = [helm_release.contour_ingress_controller]
 }
 
 data "aws_elb_hosted_zone_id" "main" {}
