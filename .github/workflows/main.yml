@@ -320,10 +320,10 @@ jobs:
       working-directory: ${{ env.DIR_TF_ENVIRONMENT }}
       run: |
         echo ${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }}
-        SUBNETS="$(${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }} | sed 's/'\''/"/g' )"
+        export SUBNETS="$(${{ steps.tf_project.outputs.PROJECT_VPC_PRIVATE_SUBNETS }} | sed 's/'\''/"/g' )"
         terraform init
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
-        -var 'project_vpc_private_subnets=$SUBNETS'
+        -var 'project_vpc_private_subnets=${{ env.SUBNETS }}'
 
     
