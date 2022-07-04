@@ -3,7 +3,7 @@ output "k8s_cluster_endpoint"{
     sensitive   = true
 }
 
-output "k8_cluster_cert"{
+output "k8s_cluster_cert"{
     value = data.aws_eks_cluster.market-cluster.certificate_authority.0.data
     sensitive   = true
 }

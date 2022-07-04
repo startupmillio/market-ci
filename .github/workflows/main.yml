@@ -331,9 +331,9 @@ jobs:
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
         -var 'project_vpc_private_subnets=${{ env.PROJECT_VPC_PRIVATE_SUBNETS }}'
         K8S_CLUSTER_ENDPOINT="$(terraform output -raw k8s_cluster_endpoint)"
-        K8S_CLUSTER_CERT="$(terraform output -raw k8_cluster_cert)"
-        K8S_CLUSTER_NAME="$(terraform output -raw k8_cluster_name)"
-        K8S_CLUSTER_TOKEN="$(terraform output -raw k8_cluster_token)"
+        K8S_CLUSTER_CERT="$(terraform output -raw k8s_cluster_cert)"
+        K8S_CLUSTER_NAME="$(terraform output -raw k8s_cluster_name)"
+        K8S_CLUSTER_TOKEN="$(terraform output -raw k8s_cluster_token)"
         echo "::set-output name=K8S_CLUSTER_ENDPOINT::$K8S_CLUSTER_ENDPOINT"
         echo "::set-output name=K8S_CLUSTER_CERT::$K8S_CLUSTER_CERT"
         echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
