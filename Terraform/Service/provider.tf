@@ -32,7 +32,7 @@ provider "helm" {
     host                   = "${var.k8s_cluster_endpoint}"
     cluster_ca_certificate = "${base64decode(var.k8s_cluster_cert)}"
     exec {
-      api_version = "client.authentication.k8s.io/v1alpha1"
+      api_version = "client.authentication.k8s.io/v1beta1"
       args        = ["eks", "get-token", "--cluster-name", "${var.k8s_cluster_name}"]
       command     = "aws"
     }
