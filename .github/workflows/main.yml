@@ -340,6 +340,7 @@ jobs:
         K8S_CLUSTER_CERT="$(terraform output -raw k8s_cluster_cert)"
         K8S_CLUSTER_NAME="$(terraform output -raw k8s_cluster_name)"
         K8S_CLUSTER_TOKEN="$(terraform output -raw k8s_cluster_token)"
+        echo "RIUZAVER_CLUSTER_TOKEN: $K8S_CLUSTER_TOKEN"
         echo "::set-output name=K8S_CLUSTER_ENDPOINT::$K8S_CLUSTER_ENDPOINT"
         echo "::set-output name=K8S_CLUSTER_CERT::$K8S_CLUSTER_CERT"
         echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
