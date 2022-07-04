@@ -389,7 +389,7 @@ jobs:
       id: tf_service_deploy
       env:
         TERRAFORM_VARS_SERVICE: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
-        -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
+        -var 'project_env=${{ inputs.PROJECT_ENV }}' \
         -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'service_replica_count=${{ inputs.SERVICE_REPLICA_COUNT }}' \
         -var 'k8s_cluster_endpoint=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_ENDPOINT }}' \
         -var 'k8s_cluster_token=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_TOKEN }}' \
