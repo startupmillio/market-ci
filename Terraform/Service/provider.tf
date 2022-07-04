@@ -30,7 +30,7 @@ terraform {
 provider "helm" {
   kubernetes {
     host                   = "${var.k8s_cluster_endpoint}"
-    cluster_ca_certificate = "${var.k8s_cluster_cert}"
+    cluster_ca_certificate = "${base64decode(var.k8s_cluster_cert)}"
     exec {
       api_version = "client.authentication.k8s.io/v1alpha1"
       args        = ["eks", "get-token", "--cluster-name", "${var.k8s_cluster_name}"]
@@ -41,7 +41,7 @@ provider "helm" {
 
 provider "kubernetes" {
   host                   = "${var.k8s_cluster_endpoint}"
-  cluster_ca_certificate = "${var.k8s_cluster_cert}"
+  cluster_ca_certificate = "${base64decode(var.k8s_cluster_cert)}"
   token                  = "${var.k8s_cluster_token}"
   #load_config_file       = false
 }
