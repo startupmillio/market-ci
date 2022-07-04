@@ -1,22 +1,22 @@
 apiVersion : apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Value.ServiceName }}-{{ .Values.Env }}-deployment
+  name: {{ $.Value.ServiceName }}-{{ $.Values.Env }}-deployment
   labels:
-    app : {{ .Value.ServiceName }}-{{ .Values.Env }}-deployment
+    app : {{ $.Value.ServiceName }}-{{ $.Values.Env }}-deployment
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ $.Values.replicaCount }}
   selector:
     matchLabels:
-      project: {{ .Value.ServiceName }}-{{ .Values.Env }}
+      project: {{ $.Value.ServiceName }}-{{ $.Values.Env }}
   template:
     metadata:
       labels:
-        project: {{ .Value.ServiceName }}-{{ .Values.Env }}   # Service will look for those PODS Labels!!!
+        project: {{ $.Value.ServiceName }}-{{ $.Values.Env }}   # Service will look for those PODS Labels!!!
     spec:
       containers:
-        - name : {{ .Value.ServiceName }}-{{ .Values.Env }}
-          image: {{ .Values.Image }}
+        - name : {{ $.Value.ServiceName }}-{{ $.Values.Env }}
+          image: {{ $.Values.Image }}
           imagePullPolicy: Always
           ports:
             - containerPort: 80
