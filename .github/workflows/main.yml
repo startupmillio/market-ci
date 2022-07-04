@@ -339,7 +339,7 @@ jobs:
         echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
         echo "::set-output name=K8S_CLUSTER_TOKEN::$K8S_CLUSTER_TOKEN"
 
-  Service Deploy:
+  service_deploy:
     runs-on: ubuntu-latest
     needs: [Deploy]
     name: Service Deploy
@@ -395,7 +395,7 @@ jobs:
         -var 'k8s_cluster_token=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_TOKEN }}' \
         -var 'k8s_cluster_name=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_NAME }}' \
         -var 'k8s_cluster_cert=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_CERT }}' \
-        -var 'service_image=${{ steps.get_image_url.outputs.ECR_IMAGE'" #!!
+        -var 'service_image=${{ steps.get_image_url.outputs.ECR_IMAGE }}'"
       working-directory: ${{ env.DIR_TF_SERVICE }}
       run: |
         terraform init
