@@ -54,6 +54,8 @@ on:
         required: false
       AWS_SECRET_ACCESS_KEY:
         required: false
+      CI_ENCRYPT_KEY:
+        required: false
 
 env:
   BUCKET_NAME: ${{ inputs.PROJECT_NAME }}-terraform
@@ -336,11 +338,10 @@ jobs:
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
         -var 'project_vpc_private_subnets=${{ env.PROJECT_VPC_PRIVATE_SUBNETS }}'
-        K8S_CLUSTER_ENDPOINT="$(terraform output -raw k8s_cluster_endpoint)"
-        K8S_CLUSTER_CERT="$(terraform output -raw k8s_cluster_cert)"
-        K8S_CLUSTER_NAME="$(terraform output -raw k8s_cluster_name)"
-        K8S_CLUSTER_TOKEN="$(terraform output -raw k8s_cluster_token)"
-        echo "RIUZAVER_CLUSTER_TOKEN: $K8S_CLUSTER_TOKEN"
+        K8S_CLUSTER_ENDPOINT="$(terraform output -raw k8s_cluster_endpoint | openssl aes-256-cbc -a -salt -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_CERT="$(terraform output -raw k8s_cluster_cert | openssl aes-256-cbc -a -salt -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_NAME="$(terraform output -raw k8s_cluster_name | openssl aes-256-cbc -a -salt -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_TOKEN="$(terraform output -raw k8s_cluster_token | openssl aes-256-cbc -a -salt -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
         echo "::set-output name=K8S_CLUSTER_ENDPOINT::$K8S_CLUSTER_ENDPOINT"
         echo "::set-output name=K8S_CLUSTER_CERT::$K8S_CLUSTER_CERT"
         echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
@@ -382,7 +383,7 @@ jobs:
         sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
         sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
         sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
-        sed -i 's|${github.bucket_key}|${{ env.PATH_TF_BACKEND_SERVICE }}|' provider.tf
+        sed -i 's|${github.bucket_key}|${{ env.PATH_TF_BACKEND_SERVICE }}|' provider.tf 
 
     - name: 'Get Image URL from ECR'
       id: get_image_url
@@ -392,16 +393,28 @@ jobs:
         ECR_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.${{ inputs.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:${{ github.sha }}"
         echo "::set-output name=ECR_IMAGE::$ECR_IMAGE"
 
+    - name: 'Decrypt K8s credentials'
+      id: k8s_decrypt
+      run: |
+        K8S_CLUSTER_ENDPOINT="$(echo needs.Deploy.outputs.K8S_CLUSTER_ENDPOINT | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_CERT="$(echo needs.Deploy.outputs.K8S_CLUSTER_CERT | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_NAME="$(echo needs.Deploy.outputs.K8S_CLUSTER_NAME | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_TOKEN="$(echo needs.Deploy.outputs.K8S_CLUSTER_TOKEN | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        echo "::set-output name=K8S_CLUSTER_ENDPOINT::$K8S_CLUSTER_ENDPOINT"
+        echo "::set-output name=K8S_CLUSTER_CERT::$K8S_CLUSTER_CERT"
+        echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
+        echo "::set-output name=K8S_CLUSTER_TOKEN::$K8S_CLUSTER_TOKEN"
+
     - name: Terraform - Service Deploy
       id: tf_service_deploy
       env:
         TERRAFORM_VARS_SERVICE: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
         -var 'project_env=${{ inputs.PROJECT_ENV }}' \
         -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'service_replica_count=${{ inputs.SERVICE_REPLICA_COUNT }}' \
-        -var 'k8s_cluster_endpoint=${{ needs.Deploy.outputs.K8S_CLUSTER_ENDPOINT }}' \
-        -var 'k8s_cluster_token=${{ needs.Deploy.outputs.K8S_CLUSTER_TOKEN }}' \
-        -var 'k8s_cluster_name=${{ needs.Deploy.outputs.K8S_CLUSTER_NAME }}' \
-        -var 'k8s_cluster_cert=${{ needs.Deploy.outputs.K8S_CLUSTER_CERT }}' \
+        -var 'k8s_cluster_endpoint=${{ steps.k8s_decrypt.outputs.K8S_CLUSTER_ENDPOINT }}' \
+        -var 'k8s_cluster_token=${{ steps.k8s_decrypt.outputs.K8S_CLUSTER_TOKEN }}' \
+        -var 'k8s_cluster_name=${{ steps.k8s_decrypt.outputs.K8S_CLUSTER_NAME }}' \
+        -var 'k8s_cluster_cert=${{ steps.k8s_decrypt.outputs.K8S_CLUSTER_CERT }}' \
         -var 'service_image=${{ steps.get_image_url.outputs.ECR_IMAGE }}'"
       working-directory: ${{ env.DIR_TF_SERVICE }}
       run: |
