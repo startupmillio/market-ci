@@ -1,5 +1,5 @@
 resource "helm_release" "market-service" {
-  name       = "contour-ingress-configure"
+  name       = "${var.service_name}-${var.project_env}"
   chart      = "../../Helm/service-chart"
   force_update = true
 
