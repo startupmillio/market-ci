@@ -26,7 +26,7 @@ variable "k8s_cluster_endpoint" {
     type = string
 }
 
-variable "k8_cluster_cert" {
+variable "k8s_cluster_cert" {
     type = string
 }
 
