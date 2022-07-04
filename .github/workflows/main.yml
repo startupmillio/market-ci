@@ -19,6 +19,14 @@ on:
         required: false
         type: boolean
         default: false
+      CI_REPO_REF:
+        required: false
+        type: string
+        default: "BM-29" # Fix before merging !!!!!!!
+      CI_REPO:
+        required: false
+        type: string
+        default: "startupmillio/market-ci"
       PROJECT_NAME: # Project name defines aws resources prefix to deploy and manage
         required: false
         type: string
@@ -26,6 +34,9 @@ on:
         required: false
         type: string
       SERVICE_NAME:
+        required: false
+        type: string
+      SERVICE_REPLICA_COUNT:
         required: false
         type: string
       AWS_REGION: # AWS Region to deploy resources in.
@@ -241,6 +252,7 @@ jobs:
         docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
 
   Deploy:
+    id: tf_infra
     runs-on: ubuntu-latest
     needs: [Pytest, Black, Build, Infrastructure-S3-ECR]
     if: |
@@ -263,8 +275,8 @@ jobs:
       uses: actions/checkout@v3
       with:
         #Cloning repository with terraform code
-        repository: startupmillio/market-ci
-        ref: "BM-29"
+        repository: ${{ inputs.CI_REPO }}
+        ref: ${{ inputs.CI_REPO_REF }}
 
     - name: 'Terraform: modifying backend variables - Project'
       working-directory: ${{ env.DIR_TF_PROJECT }}
@@ -306,6 +318,7 @@ jobs:
         sed -i 's|${github.bucket_key}|${{ env.PATH_TF_BACKEND_ENV }}|' provider.tf
 
     - name: Terraform - Environment infrastructure
+      id: tf_env
       env:
         TERRAFORM_VARS_ENV: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
         -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
@@ -318,5 +331,76 @@ jobs:
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
         -var 'project_vpc_private_subnets=${{ env.PROJECT_VPC_PRIVATE_SUBNETS }}'
+        K8S_CLUSTER_ENDPOINT="$(terraform output -raw k8s_cluster_endpoint)"
+        K8S_CLUSTER_CERT="$(terraform output -raw k8_cluster_cert)"
+        K8S_CLUSTER_NAME="$(terraform output -raw k8_cluster_name)"
+        K8S_CLUSTER_TOKEN="$(terraform output -raw k8_cluster_token)"
+        echo "::set-output name=K8S_CLUSTER_ENDPOINT::$K8S_CLUSTER_ENDPOINT"
+        echo "::set-output name=K8S_CLUSTER_CERT::$K8S_CLUSTER_CERT"
+        echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
+        echo "::set-output name=K8S_CLUSTER_TOKEN::$K8S_CLUSTER_TOKEN"
+
+  Service Deploy:
+    runs-on: ubuntu-latest
+    needs: [Deploy]
+    name: Service Deploy
+    if: inputs.testsOnly != true
+    #TEST_ACC_ID="$(aws sts get-caller-identity --query \"Account\" --output text)"
+    defaults:
+      run:
+        working-directory: ${{ inputs.codeSrc }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.AWS_REGION }}
+
+    - name: Clone market-ci repository
+      uses: actions/checkout@v3
+      with:
+        #Cloning repository with terraform code
+        repository: ${{ inputs.CI_REPO }}
+        ref: ${{ inputs.CI_REPO_REF }}
+
+    - name: 'Terraform: modifying variables - Service'
+      working-directory: ${{ env.DIR_TF_SERVICE }}
+      # Terraform does not allow to parse variables to backend configuration
+      # So we have to modify provider.tf file with our input parameters using sed.
+      run: |
+        sed -i 's/${github.project_name}/${{ inputs.PROJECT_NAME }}/' provider.tf
+        sed -i 's/${github.project_env}/${{ inputs.PROJECT_ENV }}/' provider.tf
+        sed -i 's/${github.region}/${{ inputs.AWS_REGION }}/' provider.tf
+        sed -i 's/${github.bucket_name}/${{ env.BUCKET_NAME }}/' provider.tf
+        sed -i 's|${github.bucket_key}|${{ env.PATH_TF_BACKEND_SERVICE }}|' provider.tf
+
+    - name: 'Get Image URL from ECR'
+      id: get_image_url
+      working-directory: ${{ env.DIR_TF_SERVICE }}
+      run: |
+        AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query \"Account\" --output text)"
+        ECR_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.${{ inputs.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:${{ github.sha }}"
+        echo "::set-output name=ECR_IMAGE::$ECR_IMAGE"
+
+    - name: Terraform - Service Deploy
+      id: tf_service_deploy
+      env:
+        TERRAFORM_VARS_SERVICE: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
+        -var 'project_env=${{ inputs.PROJECT_ENV }}' -var 'vpc_cidr=${{ inputs.VPC_CIDR }}' \
+        -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'service_replica_count=${{ inputs.SERVICE_REPLICA_COUNT }}' \
+        -var 'k8s_cluster_endpoint=${{ jobs.tf_infra.steps.tf_env.outputs.K8S_CLUSTER_ENDPOINT }}' \
+        -var 'k8s_cluster_token=${{ jobs.tf_infra.steps.tf_env.outputs.K8S_CLUSTER_TOKEN }}' \
+        -var 'k8s_cluster_name=${{ jobs.tf_infra.steps.tf_env.outputs.K8S_CLUSTER_NAME }}' \
+        -var 'k8s_cluster_cert=${{ jobs.tf_infra.steps.tf_env.outputs.K8S_CLUSTER_CERT }}' \
+        -var 'service_image=${{ steps.get_image_url.outputs.ECR_IMAGE'" #!!
+      working-directory: ${{ env.DIR_TF_SERVICE }}
+      run: |
+        terraform init
+        terraform validate
+        terraform apply -auto-approve ${{ env.TERRAFORM_VARS_SERVICE }}
 
     
