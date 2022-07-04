@@ -12,7 +12,7 @@ resource "helm_release" "market-service" {
     value = "${var.project_env}"
   }
   set {
-    name = "ServiceName"
+    name = "serviceName"
     value = "${var.service_name}"
   }
   set {
