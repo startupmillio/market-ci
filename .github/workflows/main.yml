@@ -338,10 +338,10 @@ jobs:
         terraform validate
         terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
         -var 'project_vpc_private_subnets=${{ env.PROJECT_VPC_PRIVATE_SUBNETS }}'
-        K8S_CLUSTER_ENDPOINT="$(terraform output -raw k8s_cluster_endpoint | openssl enc -aes-256-cbc -a -k ${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_CERT="$(terraform output -raw k8s_cluster_cert | openssl enc -aes-256-cbc -a -k ${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_NAME="$(terraform output -raw k8s_cluster_name | openssl enc -aes-256-cbc -a -k ${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_TOKEN="$(terraform output -raw k8s_cluster_token | openssl enc -aes-256-cbc -a -k ${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_ENDPOINT="$(terraform output -raw k8s_cluster_endpoint | openssl enc -aes-256-cbc -pbkdf2 -salt -k ${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_CERT="$(terraform output -raw k8s_cluster_cert | openssl enc -aes-256-cbc -pbkdf2 -salt -k ${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_NAME="$(terraform output -raw k8s_cluster_name | openssl enc -aes-256-cbc -pbkdf2 -salt -k ${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_TOKEN="$(terraform output -raw k8s_cluster_token | openssl enc -aes-256-cbc -pbkdf2 -salt -k ${{ secrets.CI_ENCRYPT_KEY }})"
         echo "::set-output name=K8S_CLUSTER_ENDPOINT::$K8S_CLUSTER_ENDPOINT"
         echo "::set-output name=K8S_CLUSTER_CERT::$K8S_CLUSTER_CERT"
         echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
@@ -396,10 +396,10 @@ jobs:
     - name: 'Decrypt K8s credentials'
       id: k8s_decrypt
       run: |
-        K8S_CLUSTER_ENDPOINT="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_ENDPOINT }} | openssl enc -aes-256-cbc -a -d -k ${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_CERT="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_CERT }} | openssl enc -aes-256-cbc -a -d -k ${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_NAME="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_NAME }} | openssl enc -aes-256-cbc -a -d -k ${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_TOKEN="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_TOKEN }} | openssl enc -aes-256-cbc -a -d -k ${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_ENDPOINT="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_ENDPOINT }} | openssl enc -d -aes-256-cbc -pbkdf2 -md sha512 -k ${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_CERT="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_CERT }} | openssl enc -d -aes-256-cbc -pbkdf2 -md sha512 -k ${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_NAME="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_NAME }} | openssl enc -d -aes-256-cbc -pbkdf2 -md sha512 -k ${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_TOKEN="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_TOKEN }} | openssl enc -d -aes-256-cbc -pbkdf2 -md sha512 -k ${{ secrets.CI_ENCRYPT_KEY }})"
         echo "::set-output name=K8S_CLUSTER_ENDPOINT::$K8S_CLUSTER_ENDPOINT"
         echo "::set-output name=K8S_CLUSTER_CERT::$K8S_CLUSTER_CERT"
         echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
