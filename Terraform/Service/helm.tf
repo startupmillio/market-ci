@@ -16,10 +16,6 @@ resource "helm_release" "market-service" {
     value = "${var.service_name}"
   }
   set {
-    name = "ServiceName"
-    value = "${var.service_name}"
-  }
-  set {
     name = "Image"
     value = "${var.service_image}"
   }
