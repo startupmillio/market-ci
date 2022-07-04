@@ -29,19 +29,19 @@ terraform {
 
 provider "helm" {
   kubernetes {
-    host                   = data.aws_eks_cluster.market-cluster.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.market-cluster.certificate_authority.0.data)
+    host                   = "${var.k8s_cluster_endpoint}"
+    cluster_ca_certificate = "${var.k8s_cluster_cert}"
     exec {
       api_version = "client.authentication.k8s.io/v1alpha1"
-      args        = ["eks", "get-token", "--cluster-name", data.aws_eks_cluster.market-cluster.name]
+      args        = ["eks", "get-token", "--cluster-name", "${var.k8s_cluster_name}"]
       command     = "aws"
     }
   }
 }
 
 provider "kubernetes" {
-  host                   = data.aws_eks_cluster.market-cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.market-cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.market-cluster.token
+  host                   = "${var.k8s_cluster_endpoint}"
+  cluster_ca_certificate = "${var.k8s_cluster_cert}"
+  token                  = "${var.k8s_cluster_token}"
   #load_config_file       = false
 }
