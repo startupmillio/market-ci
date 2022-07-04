@@ -27,6 +27,9 @@ provider "aws" {
 }
 
 provider "helm" {
+  experiments {
+    manifest = true
+  }
   kubernetes {
     host                   = data.aws_eks_cluster.market-cluster.endpoint
     cluster_ca_certificate = base64decode(data.aws_eks_cluster.market-cluster.certificate_authority.0.data)

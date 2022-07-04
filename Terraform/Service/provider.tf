@@ -28,6 +28,9 @@ terraform {
 
 
 provider "helm" {
+  experiments {
+    manifest = true
+  }
   kubernetes {
     host                   = "${var.k8s_cluster_endpoint}"
     cluster_ca_certificate = "${base64decode(var.k8s_cluster_cert)}"
