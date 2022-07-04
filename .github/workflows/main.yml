@@ -396,10 +396,10 @@ jobs:
     - name: 'Decrypt K8s credentials'
       id: k8s_decrypt
       run: |
-        K8S_CLUSTER_ENDPOINT="$(echo needs.Deploy.outputs.K8S_CLUSTER_ENDPOINT | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_CERT="$(echo needs.Deploy.outputs.K8S_CLUSTER_CERT | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_NAME="$(echo needs.Deploy.outputs.K8S_CLUSTER_NAME | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
-        K8S_CLUSTER_TOKEN="$(echo needs.Deploy.outputs.K8S_CLUSTER_TOKEN | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_ENDPOINT="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_ENDPOINT }} | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_CERT="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_CERT }} | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_NAME="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_NAME }} | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
+        K8S_CLUSTER_TOKEN="$(echo ${{ needs.Deploy.outputs.K8S_CLUSTER_TOKEN }} | openssl aes-256-cbc -d -a -pass pass:${{ secrets.CI_ENCRYPT_KEY }})"
         echo "::set-output name=K8S_CLUSTER_ENDPOINT::$K8S_CLUSTER_ENDPOINT"
         echo "::set-output name=K8S_CLUSTER_CERT::$K8S_CLUSTER_CERT"
         echo "::set-output name=K8S_CLUSTER_NAME::$K8S_CLUSTER_NAME"
