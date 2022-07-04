@@ -252,7 +252,13 @@ jobs:
         docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
 
   Deploy:
+    name: "Infrastructure for Project and Environment"
     runs-on: ubuntu-latest
+    outputs:
+      K8S_CLUSTER_ENDPOINT: ${{ steps.tf_env.outputs.K8S_CLUSTER_ENDPOINT }}
+      K8S_CLUSTER_CERT: ${{ steps.tf_env.outputs.K8S_CLUSTER_CERT }}
+      K8S_CLUSTER_NAME: ${{ steps.tf_env.outputs.K8S_CLUSTER_NAME }}
+      K8S_CLUSTER_TOKEN: ${{ steps.tf_env.outputs.K8S_CLUSTER_TOKEN }}
     needs: [Pytest, Black, Build, Infrastructure-S3-ECR]
     if: |
       always() &&
@@ -391,10 +397,10 @@ jobs:
         TERRAFORM_VARS_SERVICE: "-var 'project_region=${{ inputs.AWS_REGION }}' -var 'project_name=${{ inputs.PROJECT_NAME }}' \
         -var 'project_env=${{ inputs.PROJECT_ENV }}' \
         -var 'service_name=${{ inputs.SERVICE_NAME }}' -var 'service_replica_count=${{ inputs.SERVICE_REPLICA_COUNT }}' \
-        -var 'k8s_cluster_endpoint=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_ENDPOINT }}' \
-        -var 'k8s_cluster_token=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_TOKEN }}' \
-        -var 'k8s_cluster_name=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_NAME }}' \
-        -var 'k8s_cluster_cert=${{ needs.Deploy.steps.tf_env.outputs.K8S_CLUSTER_CERT }}' \
+        -var 'k8s_cluster_endpoint=${{ needs.Deploy.outputs.K8S_CLUSTER_ENDPOINT }}' \
+        -var 'k8s_cluster_token=${{ needs.Deploy.outputs.K8S_CLUSTER_TOKEN }}' \
+        -var 'k8s_cluster_name=${{ needs.Deploy.outputs.K8S_CLUSTER_NAME }}' \
+        -var 'k8s_cluster_cert=${{ needs.Deploy.outputs.K8S_CLUSTER_CERT }}' \
         -var 'service_image=${{ steps.get_image_url.outputs.ECR_IMAGE }}'"
       working-directory: ${{ env.DIR_TF_SERVICE }}
       run: |
