@@ -9,17 +9,17 @@ spec:
     http:
       paths:
         - backend:
-           serviceName: market-user-ms
+           serviceName: market-user-ms-{{ .Values.env }}-service
            servicePort: 80
   - host: {{ .Values.env }}.market-product-ms.{{ .Values.domain }}
     http:
       paths:
         - backend:
-           serviceName: market-product-ms
+           serviceName: market-product-ms-{{ .Values.env }}-service
            servicePort: 80
   - host: {{ .Values.env }}.market-media-ms.{{ .Values.domain }}
     http:
       paths:
         - backend:
-           serviceName: market-media-ms
+           serviceName: market-media-ms-{{ .Values.env }}-service
            servicePort: 80
