@@ -1,6 +1,7 @@
 resource "helm_release" "market-service" {
   name       = "contour-ingress-configure"
   chart      = "../../Helm/service-chart"
+  force_update = true
 
   set {
     name = "replicaCount"
