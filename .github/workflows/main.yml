@@ -22,7 +22,7 @@ on:
       CI_REPO_REF:
         required: false
         type: string
-        default: "BM-29" # Fix before merging !!!!!!!
+        default: "main" # Fix before merging !!!!!!!
       CI_REPO:
         required: false
         type: string
@@ -48,6 +48,11 @@ on:
       ROUTE53_ZONE: # Zone name to create dns records in
         required: false
         type: string
+      TERRAFORM_COMMAND:
+        required: false
+        type: string
+        default: "apply"
+        
         
     secrets:
       AWS_ACCESS_KEY_ID:
@@ -322,7 +327,7 @@ jobs:
       run: |
         terraform init
         terraform validate
-        terraform apply -auto-approve ${{ env.TERRAFORM_VARS_PROJECT }}
+        terraform ${{ inputs.TERRAFORM_COMMAND }} -auto-approve ${{ env.TERRAFORM_VARS_PROJECT }}
         PROJECT_VPC_ID="$(terraform output -raw project_vpc_id)"
         PROJECT_VPC_PRIVATE_SUBNETS="$(terraform output -raw project_vpc_private_subnets)"
         echo "::set-output name=PROJECT_VPC_ID::$PROJECT_VPC_ID"
@@ -351,7 +356,7 @@ jobs:
       run: |
         terraform init
         terraform validate
-        terraform apply -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
+        terraform ${{ inputs.TERRAFORM_COMMAND }} -auto-approve ${{ env.TERRAFORM_VARS_ENV }} \
         -var 'project_vpc_private_subnets=${{ env.PROJECT_VPC_PRIVATE_SUBNETS }}'
         K8S_CLUSTER_ENDPOINT="$(gpg --symmetric --batch --passphrase ${{ secrets.CI_ENCRYPT_KEY }} --output - <(terraform output -raw k8s_cluster_endpoint) | base64 -w0)"
         K8S_CLUSTER_CERT="$(gpg --symmetric --batch --passphrase ${{ secrets.CI_ENCRYPT_KEY }} --output - <(terraform output -raw k8s_cluster_cert) | base64 -w0)"
@@ -435,6 +440,6 @@ jobs:
       run: |
         terraform init
         terraform validate
-        terraform apply -auto-approve ${{ env.TERRAFORM_VARS_SERVICE }}
+        terraform ${{ inputs.TERRAFORM_COMMAND }} -auto-approve ${{ env.TERRAFORM_VARS_SERVICE }}
 
     
